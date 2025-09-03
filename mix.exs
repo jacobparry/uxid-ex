@@ -3,16 +3,17 @@ defmodule UXID.MixProject do
 
   @name "UXID"
   @app :uxid
-  @description "Generates identifiers like: cus_01EPEY1JMKXVBT and txn_01EPEY2P06TR1RTV07XA82ZGJJ. Includes Ecto type."
-  @version "0.2.7"
+  @description "Generates UX focused IDs like: usr_01epey2p06tr1rtv07xa82zgjj (K-sortable with prefix - like Stripe)"
+  @version "2.0.1"
 
   @deps [
     # Required
 
     # Optional
-    {:ecto, "~> 3.5", optional: true},
+    {:ecto, "~> 3.12", optional: true},
 
     # Development, Documentation, Testing, ...
+    {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
     {:ex_doc, "~> 0.23", only: :dev},
     {:benchee, "~> 1.0", only: :dev},
     {:benchee_html, "~> 1.0", only: :dev},
@@ -70,7 +71,6 @@ defmodule UXID.MixProject do
     [
       licenses: ["MIT"],
       links: %{
-        "UXID Project" => "https://github.com/riddler/uxid",
         "GitHub" => "https://github.com/riddler/uxid-ex"
       }
     ]

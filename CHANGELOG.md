@@ -1,6 +1,20 @@
 ### Upcoming
 
-* (None yet)
+* Adds delimiter option (default is '_')
+* Adds UXID.Codec with encoding struct and type
+* Fixes Dialyzer issues
+
+### 2.0.0 / 2025-04-27
+
+#### Breaking Changes
+
+* Adds case config and functionality
+* Makes lowercase the default
+* Removes deprecated Ecto.UXID
+
+### 1.0.0 / 2025-04-13
+
+* Fixes compiler warnings
 
 ### 0.2.3 / 2020-11-29
 

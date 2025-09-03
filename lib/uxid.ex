@@ -17,107 +17,78 @@ defmodule UXID do
   Many of the concepts of Stripe IDs have been used in this library.
   """
 
-  defstruct [
-    :encoded,
-    :prefix,
-    :rand_size,
-    :rand,
-    :rand_encoded,
-    :size,
-    :string,
-    :time,
-    :time_encoded
-  ]
-
   @typedoc "Options for generating a UXID"
   @type option ::
-          {:time, integer()} | {:size, atom()} | {:rand_size, integer()} | {:prefix, String.t()}
+          {:case, atom()} |
+          {:time, integer()} |
+          {:size, atom()} |
+          {:rand_size, integer()} |
+          {:prefix, String.t()} |
+          {:delimiter, String.t()}
+
   @type options :: [option()]
 
   @typedoc "A UXID represented as a String"
-  @type uxid_string :: String.t()
+  @type t() :: String.t()
 
-  @typedoc "An error string returned by the library if generation fails"
-  @type error_string :: String.t()
-
-  @typedoc "A UXID struct"
-  @type t() :: %__MODULE__{
-          encoded: String.t() | nil,
-          prefix: String.t() | nil,
-          rand_size: pos_integer() | nil,
-          rand: binary() | nil,
-          rand_encoded: String.t() | nil,
-          size: atom() | nil,
-          string: String.t() | nil,
-          time: pos_integer() | nil,
-          time_encoded: String.t() | nil
-        }
-
-  alias UXID.Encoder
+  alias UXID.{Codec, Encoder}
   alias UXID.Decoder
 
-  @spec generate(opts :: options()) :: {:ok, uxid_string()} | {:error, error_string()}
+  @spec generate(opts :: options()) :: {:ok, __MODULE__.t()}
   @doc """
   Returns an encoded UXID string along with response status.
   """
   def generate(opts \\ []) do
-    case new(opts) do
-      {:ok, %__MODULE__{string: string}} ->
-        {:ok, string}
+    {:ok, %Codec{string: string}} = new(opts)
 
-      {:error, error} ->
-        {:error, error}
-    end
+    {:ok, string}
   end
 
-  @spec generate!(opts :: options()) :: uxid_string()
+  @spec generate!(opts :: options()) :: __MODULE__.t()
   @doc """
-  Returns an unwrapped encoded UXID string or raises on error.
+  Returns an unwrapped encoded UXID string.
   """
   def generate!(opts \\ []) do
-    case generate(opts) do
-      {:ok, uxid} -> uxid
-      {:error, error} -> raise error
-    end
+    {:ok, uxid} = generate(opts)
+    uxid
   end
 
-  @spec new(opts :: options()) :: {:ok, __MODULE__.t()} | {:error, error_string()}
+  @spec new(opts :: options()) :: {:ok, Codec.t()}
   @doc """
-  Returns a new UXID struct. This is useful for development.
+  Returns a new UXID.Codec struct. This is useful for development.
   """
   def new(opts \\ []) do
-    timestamp = Keyword.get(opts, :time, System.system_time(:millisecond))
+    case = Keyword.get(opts, :case, encode_case())
+    prefix = Keyword.get(opts, :prefix)
     rand_size = Keyword.get(opts, :rand_size)
     size = Keyword.get(opts, :size)
-    prefix = Keyword.get(opts, :prefix)
+    delimiter = Keyword.get(opts, :delimiter)
+    timestamp = Keyword.get(opts, :time, System.system_time(:millisecond))
 
-    %__MODULE__{
+    %Codec{
+      case: case,
       prefix: prefix,
       rand_size: rand_size,
       size: size,
-      time: timestamp
+      time: timestamp,
+      delimiter: delimiter
     }
     |> Encoder.process()
-    |> case do
-      {:ok, %__MODULE__{string: string} = struct} when not is_nil(string) ->
-        {:ok, struct}
-
-      {:error, error} ->
-        {:error, error}
-
-      :error ->
-        {:error, "Unknown error occurred"}
-    end
   end
 
-  @spec decode(uxid_string) :: {:ok, %__MODULE__{}} | {:error, error_string}
+  def encode_case(), do: Application.get_env(:uxid, :case, :lower)
+
+  @spec decode(String.t()) :: {:ok, %Codec{}} | {:error, String.t()}
+  @doc """
+  Decodes a UXID string and returns a Codec struct with extracted components.
+  """
   def decode(uxid) do
-    %__MODULE__{
+    %Codec{
       string: uxid
     }
     |> Decoder.process()
     |> case do
-      {:ok, %__MODULE__{} = struct} ->
+      {:ok, %Codec{} = struct} ->
         {:ok, struct}
 
       {:error, error} ->
@@ -132,37 +103,45 @@ defmodule UXID do
   if Code.ensure_loaded?(Ecto) do
     use Ecto.ParameterizedType
 
+    @impl Ecto.ParameterizedType
     @doc """
     Generates a loaded version of the UXID.
     """
-    @impl Ecto.ParameterizedType
     def autogenerate(opts) do
+      case = Map.get(opts, :case, encode_case())
       prefix = Map.get(opts, :prefix)
       size = Map.get(opts, :size)
       rand_size = Map.get(opts, :rand_size)
+      delimiter = Keyword.get(opts, :delimiter)
 
-      __MODULE__.generate!(prefix: prefix, size: size, rand_size: rand_size)
+      __MODULE__.generate!(
+        case: case,
+        prefix: prefix,
+        size: size,
+        rand_size: rand_size,
+        delimiter: delimiter
+      )
     end
 
+    @impl Ecto.ParameterizedType
     @doc """
     Returns the underlying schema type for a UXID.
     """
-    @impl Ecto.ParameterizedType
     def type(_opts), do: :string
 
+    @impl Ecto.ParameterizedType
     @doc """
     Converts the options specified in the field macro into parameters to be used in other callbacks.
     """
-    @impl Ecto.ParameterizedType
     def init(opts) do
       # validate_opts(opts)
       Enum.into(opts, %{})
     end
 
+    @impl Ecto.ParameterizedType
     @doc """
     Casts the given input to the UXID ParameterizedType with the given parameters.
     """
-    @impl Ecto.ParameterizedType
     def cast(data, _params) do
       cast_binary(data)
     end
@@ -172,12 +151,15 @@ defmodule UXID do
     defp cast_binary(_), do: :error
 
     @impl Ecto.ParameterizedType
+    @doc """
+    Loads the given term into a UXID.
+    """
     def load(data, _loader, _params), do: {:ok, data}
 
+    @impl Ecto.ParameterizedType
     @doc """
     Dumps the given term into an Ecto native type.
     """
-    @impl Ecto.ParameterizedType
     def dump(data, _dumper, _params), do: {:ok, data}
   end
 end
