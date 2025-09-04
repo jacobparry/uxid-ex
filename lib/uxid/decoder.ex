@@ -1,12 +1,14 @@
 defmodule UXID.Decoder do
   @moduledoc """
-  Encodes UXID structs into strings
+  Decodes UXID strings into Codec structs
   """
+
+  alias UXID.Codec
 
   @delimiter "_"
 
-  @spec process(UXID.t()) :: %UXID{}
-  def process(%UXID{} = struct) do
+  @spec process(Codec.t()) :: {:ok, Codec.t()} | {:error, String.t()}
+  def process(%Codec{} = struct) do
     decoded =
       struct
       |> separate_prefix()
@@ -19,13 +21,13 @@ defmodule UXID.Decoder do
     {:ok, decoded}
   end
 
-  @spec separate_prefix(UXID.t()) :: UXID.t({})
-  def separate_prefix(%UXID{prefix: nil, string: uxid_string} = struct) do
+  @spec separate_prefix(Codec.t()) :: Codec.t()
+  def separate_prefix(%Codec{prefix: nil, string: uxid_string} = struct) do
     %{prefix: prefix, encoded: encoded} = split_uxid_string(uxid_string)
     %{struct | prefix: prefix, encoded: encoded}
   end
 
-  def separate_prefix(%UXID{prefix: _, string: _} = struct) do
+  def separate_prefix(%Codec{prefix: _, string: _} = struct) do
     struct
   end
 
@@ -42,28 +44,28 @@ defmodule UXID.Decoder do
     end
   end
 
-  def separate_encoded(%UXID{encoded: encoded} = struct) do
+  def separate_encoded(%Codec{encoded: encoded} = struct) do
     # Encoded Timestamp is always 10 characters
     {time_encoded, rand_encoded} = String.split_at(encoded, 10)
     %{struct | time_encoded: time_encoded, rand_encoded: rand_encoded}
   end
 
-  def decode_size(%UXID{rand_encoded: _rand_encoded} = struct) do
+  def decode_size(%Codec{rand_encoded: _rand_encoded} = struct) do
     %{struct | size: :decode_not_supported}
   end
 
-  def decode_rand(%UXID{rand_encoded: _rand_encoded} = struct) do
+  def decode_rand(%Codec{rand_encoded: _rand_encoded} = struct) do
     %{struct | rand: :decode_not_supported}
   end
 
-  def decode_rand_size(%UXID{rand_encoded: _rand_encoded} = struct) do
+  def decode_rand_size(%Codec{rand_encoded: _rand_encoded} = struct) do
     %{struct | rand_size: :decode_not_supported}
   end
 
   # Decode UXID and extract timestamp
-  @spec decode_time(UXID.t()) :: DateTime.t()
+  @spec decode_time(Codec.t()) :: Codec.t()
   def decode_time(
-        %UXID{
+        %Codec{
           time_encoded: <<t1::8, t2::8, t3::8, t4::8, t5::8, t6::8, t7::8, t8::8, t9::8, t10::8>>
         } = struct
       ) do
@@ -106,4 +108,27 @@ defmodule UXID.Decoder do
   def d(?X), do: 29
   def d(?Y), do: 30
   def d(?Z), do: 31
+  # Support lowercase as well
+  def d(?a), do: 10
+  def d(?b), do: 11
+  def d(?c), do: 12
+  def d(?d), do: 13
+  def d(?e), do: 14
+  def d(?f), do: 15
+  def d(?g), do: 16
+  def d(?h), do: 17
+  def d(?j), do: 18
+  def d(?k), do: 19
+  def d(?m), do: 20
+  def d(?n), do: 21
+  def d(?p), do: 22
+  def d(?q), do: 23
+  def d(?r), do: 24
+  def d(?s), do: 25
+  def d(?t), do: 26
+  def d(?v), do: 27
+  def d(?w), do: 28
+  def d(?x), do: 29
+  def d(?y), do: 30
+  def d(?z), do: 31
 end

@@ -19,12 +19,12 @@ defmodule UXID do
 
   @typedoc "Options for generating a UXID"
   @type option ::
-          {:case, atom()} |
-          {:time, integer()} |
-          {:size, atom()} |
-          {:rand_size, integer()} |
-          {:prefix, String.t()} |
-          {:delimiter, String.t()}
+          {:case, atom()}
+          | {:time, integer()}
+          | {:size, atom()}
+          | {:rand_size, integer()}
+          | {:prefix, String.t()}
+          | {:delimiter, String.t()}
 
   @type options :: [option()]
 
@@ -78,7 +78,7 @@ defmodule UXID do
 
   def encode_case(), do: Application.get_env(:uxid, :case, :lower)
 
-  @spec decode(String.t()) :: {:ok, %Codec{}} | {:error, String.t()}
+  @spec decode(String.t()) :: {:ok, %Codec{}}
   @doc """
   Decodes a UXID string and returns a Codec struct with extracted components.
   """
@@ -87,16 +87,6 @@ defmodule UXID do
       string: uxid
     }
     |> Decoder.process()
-    |> case do
-      {:ok, %Codec{} = struct} ->
-        {:ok, struct}
-
-      {:error, error} ->
-        {:error, error}
-
-      :error ->
-        {:error, "Unknown error occurred"}
-    end
   end
 
   # Define additional functions for custom Ecto type if Ecto is loaded

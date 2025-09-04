@@ -1,12 +1,12 @@
-defmodule UXID.DebcoderTest do
+defmodule UXID.DecoderTest do
   use ExUnit.Case, async: true
 
-  alias UXID.Decoder
+  alias UXID.{Decoder, Codec}
 
   describe "process/1 +" do
     test "Returns a decoded uxid struct from generated uxid" do
       {:ok, generated_uxid} = UXID.new()
-      {:ok, decoded_uxid} = Decoder.process(%UXID{string: generated_uxid.string})
+      {:ok, decoded_uxid} = Decoder.process(%Codec{string: generated_uxid.string})
 
       assert decoded_uxid.prefix == nil
       assert decoded_uxid.prefix == generated_uxid.prefix
@@ -22,7 +22,7 @@ defmodule UXID.DebcoderTest do
 
     test "Returns a decoded uxid struct from generated uxid with prefix" do
       {:ok, generated_uxid} = UXID.new(prefix: "prefix")
-      {:ok, decoded_uxid} = Decoder.process(%UXID{string: generated_uxid.string})
+      {:ok, decoded_uxid} = Decoder.process(%Codec{string: generated_uxid.string})
 
       assert decoded_uxid.prefix == "prefix"
       assert decoded_uxid.prefix == generated_uxid.prefix
@@ -41,31 +41,31 @@ defmodule UXID.DebcoderTest do
     test "no prefix" do
       {:ok, uxid} = UXID.new()
 
-      assert %UXID{
+      assert %Codec{
                encoded: uxid.encoded,
                prefix: nil,
                string: uxid.string
-             } == Decoder.separate_prefix(%UXID{prefix: nil, string: uxid.string})
+             } == Decoder.separate_prefix(%Codec{prefix: nil, string: uxid.string})
     end
 
     test "prefix" do
       {:ok, uxid} = UXID.new(prefix: "prefix")
 
-      assert %UXID{
+      assert %Codec{
                encoded: uxid.encoded,
                prefix: "prefix",
                string: uxid.string
-             } == Decoder.separate_prefix(%UXID{prefix: nil, string: uxid.string})
+             } == Decoder.separate_prefix(%Codec{prefix: nil, string: uxid.string})
     end
 
     test "prefix with underscore" do
       {:ok, uxid} = UXID.new(prefix: "multi_word_prefix")
 
-      assert %UXID{
+      assert %Codec{
                encoded: uxid.encoded,
                prefix: "multi_word_prefix",
                string: uxid.string
-             } == Decoder.separate_prefix(%UXID{prefix: nil, string: uxid.string})
+             } == Decoder.separate_prefix(%Codec{prefix: nil, string: uxid.string})
     end
   end
 
@@ -73,11 +73,11 @@ defmodule UXID.DebcoderTest do
     test "separates time from the random bytes " do
       {:ok, uxid} = UXID.new()
 
-      assert %UXID{
+      assert %Codec{
                encoded: uxid.encoded,
                rand_encoded: uxid.rand_encoded,
                time_encoded: uxid.time_encoded
-             } == Decoder.separate_encoded(%UXID{encoded: uxid.encoded})
+             } == Decoder.separate_encoded(%Codec{encoded: uxid.encoded})
     end
   end
 
@@ -85,28 +85,28 @@ defmodule UXID.DebcoderTest do
     test "decodes the time back into unix" do
       {:ok, uxid} = UXID.new()
 
-      assert %UXID{
+      assert %Codec{
                time_encoded: uxid.time_encoded,
                time: uxid.time
-             } == Decoder.decode_time(%UXID{time_encoded: uxid.time_encoded})
+             } == Decoder.decode_time(%Codec{time_encoded: uxid.time_encoded})
     end
   end
 
   describe "decode_size/1" do
     test "separates time from the random bytes " do
-      assert %UXID{size: :decode_not_supported} == Decoder.decode_size(%UXID{})
+      assert %Codec{size: :decode_not_supported} == Decoder.decode_size(%Codec{})
     end
   end
 
   describe "decode_rand/1" do
     test "separates time from the random bytes " do
-      assert %UXID{rand: :decode_not_supported} == Decoder.decode_rand(%UXID{})
+      assert %Codec{rand: :decode_not_supported} == Decoder.decode_rand(%Codec{})
     end
   end
 
   describe "decode_rand_size/1" do
     test "separates time from the random bytes " do
-      assert %UXID{rand_size: :decode_not_supported} == Decoder.decode_rand_size(%UXID{})
+      assert %Codec{rand_size: :decode_not_supported} == Decoder.decode_rand_size(%Codec{})
     end
   end
 

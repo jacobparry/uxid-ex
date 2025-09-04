@@ -23,7 +23,7 @@ defmodule UXIDTest do
 
   describe "new/1" do
     test "Returns a UXID struct" do
-      assert {:ok, %UXID{}} = UXID.new()
+      assert {:ok, %UXID.Codec{}} = UXID.new()
     end
   end
 
@@ -31,7 +31,7 @@ defmodule UXIDTest do
     test "hardcoded uxid" do
       {:ok, decoded_uxid} = UXID.decode("01G2B5M42HWY45WE5YQE3P2CJ2")
 
-      assert %UXID{
+      assert %UXID.Codec{
                encoded: "01G2B5M42HWY45WE5YQE3P2CJ2",
                prefix: nil,
                rand: :decode_not_supported,
