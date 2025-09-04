@@ -13,7 +13,7 @@ Benchee.run(
 Benchee.run(
   %{
     "UXID.decode" => fn uxid -> UXID.decode(uxid) end,
-    "Decoder.process" => fn uxid -> UXID.Decoder.process(%UXID{string: uxid}) end
+    "Decoder.process" => fn uxid -> UXID.Decoder.process(%UXID.Codec{string: uxid}) end
   },
   inputs: %{
     "UXID" => UXID.generate!(),
